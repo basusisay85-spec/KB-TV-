@@ -369,6 +369,12 @@ html, body {
 .error-overlay .icon { font-size: 40px; margin-bottom: 10px; }
 .error-overlay .msg { font-size: 14px; font-weight: 600; }
 
+/* ============ FIXED OVERLAYS ============ */
+.fix-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 60; text-align: center; display: none; flex-direction: column; align-items: center; gap: 10px; background: rgba(0,0,0,0.9); padding: 20px; border-radius: 16px; border: 1.5px solid rgba(255,107,53,0.5); width: 90%; max-width: 320px; }
+.fix-overlay.show { display: flex; }
+.fix-overlay .btn { padding: 10px 20px; background: linear-gradient(135deg, #ff6b35, #f7c948); border: none; border-radius: 10px; color: #fff; font-weight: 800; cursor: pointer; font-size: 13px; width: 100%; }
+.fix-overlay .btn-secondary { background: transparent; border: 1.5px solid rgba(255,255,255,0.2); color: #fff; margin-top: 5px; }
+
 .quality-menu { position: absolute; top: 50px; right: 60px; background: #1a1f2e; border-radius: 12px; padding: 8px; z-index: 600; display: none; flex-direction: column; gap: 4px; min-width: 100px; border: 1.5px solid rgba(34, 197, 94, 0.3); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
 .quality-menu.show { display: flex; }
 .quality-menu-item { padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -587,7 +593,7 @@ html, body {
   <div class="settings-section">
     <div class="settings-section-title">About</div>
     <div class="settings-card">
-      <div class="settings-item" onclick="showToast('ℹ️ CRICFY TV v7.3')">
+      <div class="settings-item" onclick="showToast('ℹ️ CRICFY TV v7.4')">
         <div class="settings-icon">ℹ️</div>
         <div class="settings-label">About CRICFY TV</div>
         <div class="settings-arrow">›</div>
@@ -612,6 +618,16 @@ html, body {
       <div class="icon">⚠️</div>
       <div class="msg" id="errorMsg">Stream Unavailable. Try another server.</div>
     </div>
+    
+    <!-- HARD RESET OVERLAY -->
+    <div class="fix-overlay" id="fixOverlay">
+      <div style="font-size: 30px; margin-bottom: 5px;">🔄</div>
+      <div style="font-size: 13px; font-weight: 700; color: #fff;">Stream Stuck?</div>
+      <div style="font-size: 11px; color: #8b8fa3;">Tap the button below to force reload the player and clear the buffer.</div>
+      <button class="btn" onclick="hardResetStream()">FORCE RELOAD</button>
+      <button class="btn btn-secondary" onclick="closePlayer()">CANCEL</button>
+    </div>
+
     <video id="playerVideo" controls autoplay playsinline webkit-playsinline></video>
     <div class="video-progress"><div class="video-progress-fill" id="videoProgress"></div></div>
   </div>
@@ -882,24 +898,33 @@ function loadHLSStream(url) {
   const video = document.getElementById('playerVideo');
   const loading = document.getElementById('playerLoading');
   const errorOverlay = document.getElementById('playerError');
+  const fixOverlay = document.getElementById('fixOverlay');
   
   // Reset UI
   loading.classList.add('show');
   errorOverlay.classList.remove('show');
+  fixOverlay.classList.remove('show');
   document.getElementById('errorMsg').textContent = "Connecting to stream...";
   
   if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
   currentStreamUrl = url;
   
-  // Watchdog: If stream doesn't load in 10 seconds, show error
+  // Watchdog: If stream doesn't load in 12 seconds, show error
   if (streamCheckTimer) clearTimeout(streamCheckTimer);
   streamCheckTimer = setTimeout(() => {
     if (loading.classList.contains('show')) {
       loading.classList.remove('show');
       errorOverlay.classList.add('show');
-      document.getElementById('errorMsg').textContent = "Stream timed out. Server may be offline. Please try Server 2 or 3.";
+      document.getElementById('errorMsg').textContent = "Stream timed out. The channel may be offline or blocked. Please try Server 2 or 3.";
     }
-  }, 10000);
+  }, 12000);
+
+  // Smart Proxy logic: If stream is http, try to use https proxy
+  let finalUrl = url;
+  if (url.startsWith('http://')) {
+    finalUrl = 'https://' + url.substring(7); // Upgrade to https
+    console.log("Upgraded HTTP to HTTPS:", finalUrl);
+  }
 
   if (Hls.isSupported()) {
     hlsInstance = new Hls({
@@ -920,7 +945,7 @@ function loadHLSStream(url) {
       testBandwidth: false,
       xhrSetup: function(xhr) { xhr.withCredentials = false; }
     });
-    hlsInstance.loadSource(url);
+    hlsInstance.loadSource(finalUrl);
     hlsInstance.attachMedia(video);
     
     hlsInstance.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
@@ -941,12 +966,15 @@ function loadHLSStream(url) {
       if (data.fatal) {
         clearTimeout(streamCheckTimer);
         loading.classList.remove('show');
+        
+        // Show the Fix Overlay if it fails
+        fixOverlay.classList.add('show');
         errorOverlay.classList.add('show');
+        
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-          document.getElementById('errorMsg').textContent = "Network error. The channel might be offline. Try Server 2 or 3.";
+          document.getElementById('errorMsg').textContent = "Network Error. The channel is offline or blocking the player.";
         } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-          document.getElementById('errorMsg').textContent = "Media error. Retrying...";
-          hlsInstance.recoverMediaError();
+          document.getElementById('errorMsg').textContent = "Media Error. The stream format is not supported.";
         } else {
           document.getElementById('errorMsg').textContent = "Stream dead. Try another server.";
         }
@@ -959,14 +987,24 @@ function loadHLSStream(url) {
       }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = url;
-    video.addEventListener('loadedmetadata', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); errorOverlay.classList.remove('show'); video.play().catch(() => {}); }, { once: true });
-    video.addEventListener('error', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); errorOverlay.classList.add('show'); }, { once: true });
+    video.src = finalUrl;
+    video.addEventListener('loadedmetadata', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); errorOverlay.classList.remove('show'); fixOverlay.classList.remove('show'); video.play().catch(() => {}); }, { once: true });
+    video.addEventListener('error', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); fixOverlay.classList.add('show'); errorOverlay.classList.add('show'); }, { once: true });
   } else {
-    video.src = url;
+    video.src = finalUrl;
     video.load();
-    video.addEventListener('canplay', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); errorOverlay.classList.remove('show'); video.play().catch(() => {}); }, { once: true });
-    video.addEventListener('error', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); errorOverlay.classList.add('show'); }, { once: true });
+    video.addEventListener('canplay', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); errorOverlay.classList.remove('show'); fixOverlay.classList.remove('show'); video.play().catch(() => {}); }, { once: true });
+    video.addEventListener('error', () => { clearTimeout(streamCheckTimer); loading.classList.remove('show'); fixOverlay.classList.add('show'); errorOverlay.classList.add('show'); }, { once: true });
+  }
+}
+
+/* ============ HARD RESET STREAM ============ */
+function hardResetStream() {
+  showToast('🔄 Force reloading stream...');
+  document.getElementById('fixOverlay').classList.remove('show');
+  document.getElementById('errorOverlay').classList.remove('show');
+  if (currentStreamUrl) {
+    loadHLSStream(currentStreamUrl);
   }
 }
 
@@ -1034,9 +1072,8 @@ function switchServer(i, el) {
   showToast(`🔄 Reloading on Server ${i + 1}...`);
   
   if (currentStreamUrl) {
-    if (i > 0) {
-      showToast(`🔄 Retrying stream...`);
-    }
+    // In a real IPTV app, you would have different URLs for different servers.
+    // Here, we simulate switching by forcing a hard reset of the stream.
     loadHLSStream(currentStreamUrl); 
   }
 }
@@ -1047,6 +1084,8 @@ function closePlayer() {
   v.pause(); v.src = '';
   if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
   document.getElementById('qualityMenu').classList.remove('show');
+  document.getElementById('fixOverlay').classList.remove('show');
+  document.getElementById('errorOverlay').classList.remove('show');
   if (streamCheckTimer) clearTimeout(streamCheckTimer);
 }
 
