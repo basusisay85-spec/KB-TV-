@@ -3,343 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EarnCraft</title>
+    <title>QvaPay P2P</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-main: #0b3d1e;
-            --bg-card: #14612e;
-            --bg-card-light: #1b7a3b;
-            --gold: #f1c40f;
+            --bg-main: #0f111a;
+            --bg-card: #1a1d2d;
+            --primary: #00d1b2; /* QvaPay Green */
+            --secondary: #f6465d; /* Sell Red */
             --text-main: #ffffff;
-            --text-muted: #a3c4b1;
-            --btn-green: #2ecc71;
-            --border: rgba(255, 255, 255, 0.1);
+            --text-muted: #8b8e9f;
+            --border: #2a2e42;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); padding-bottom: 85px; overflow-x: hidden; }
 
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #082d16; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;}
-        .user-profile { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 45px; height: 45px; border-radius: 50%; background: #fff; display: flex; justify-content: center; align-items: center; font-size: 24px; }
-        .user-details { display: flex; flex-direction: column; }
-        .user-name { font-weight: bold; font-size: 18px; }
-        .user-id { font-size: 13px; color: var(--text-muted); }
-        
-        .balances { display: flex; gap: 10px; }
-        .balance-pill { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 14px; border: 1px solid var(--border); }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;}
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; color: var(--primary); }
+        .user-id { background: #0f111a; padding: 6px 12px; border-radius: 20px; font-size: 13px; border: 1px solid var(--border);}
 
-        /* Navigation Pages */
+        /* Pages */
         .page { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Spin Page (Design Matching Image) */
-        .spin-page-container { text-align: center; }
-        .cash-out-text { font-size: 14px; color: var(--text-muted); margin-top: 10px;}
-        .cash-out-text span { color: var(--gold); font-weight: bold; }
-        .progress-container { background: #082d16; height: 25px; border-radius: 15px; margin: 15px 0 30px 0; position: relative; overflow: hidden; border: 1px solid var(--border);}
-        .progress-bar { background: linear-gradient(90deg, #f1c40f, #f39c12); width: 55%; height: 100%; border-radius: 15px; transition: width 1s ease-in-out;}
-        .progress-text { position: absolute; right: 15px; top: 4px; font-size: 13px; font-weight: bold; color: #000; z-index: 10;}
-        
-        .wheel-wrapper { position: relative; width: 320px; height: 320px; margin: 0 auto; }
-        .wheel-outer-ring { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #d4af37; padding: 5px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(0,0,0,0.5); }
-        .wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#e74c3c 0 45deg, #f1c40f 45deg 90deg, #2ecc71 90deg 135deg, #3498db 135deg 180deg, #9b59b6 180deg 225deg, #e67e22 225deg 270deg, #1abc9c 270deg 315deg, #c0392b 315deg 360deg); border: 3px solid #fff; transition: transform 4s cubic-bezier(0.17, 0.67, 0.1, 1.02); position: relative;}
-        
-        .wheel-pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 30px; height: 40px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f1c40f"><path d="M12 2L2 22h20L12 2z"/></svg>') no-repeat center; background-size: contain; z-index: 20; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        
-        .spin-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90px; height: 90px; background: radial-gradient(circle, #1b7a3b, #082d16); border-radius: 50%; border: 4px solid var(--gold); display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: 900; font-size: 22px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.6); z-index: 10; color: white;}
-        .spin-btn:active { transform: translate(-50%, -50%) scale(0.95); }
-        .spin-btn span { font-size: 14px; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 4px;}
+        /* Tabs */
+        .trade-tabs { display: flex; background: var(--bg-card); border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border);}
+        .tab { flex: 1; text-align: center; padding: 15px; font-weight: bold; cursor: pointer; color: var(--text-muted); transition: 0.3s;}
+        .tab.active-buy { background: var(--primary); color: #000; }
+        .tab.active-sell { background: var(--secondary); color: white; }
 
-        /* Invite / Share Section */
-        .invite-container { margin-top: 30px; display: flex; gap: 10px; }
-        .invite-btn { flex: 1; background: linear-gradient(90deg, #2ecc71, #27ae60); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; display: flex; justify-content: center; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);}
-        .copy-btn { width: 50px; background: #14612e; border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: white; font-size: 20px;}
-        .share-to { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 20px; color: var(--text-muted); font-size: 14px;}
-        .share-icon { width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; color: white; cursor: pointer;}
-        .share-icon.whatsapp { background: #25D366; }
-        .share-icon.twitter { background: #000; }
-        .share-icon.facebook { background: #1877F2; }
+        /* Market Price */
+        .market-card { background: var(--bg-card); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border);}
+        .market-title { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+        .market-price { font-size: 36px; font-weight: bold; color: var(--primary); display: flex; align-items: baseline; gap: 5px;}
+        .market-price span { font-size: 16px; color: var(--text-muted); }
 
-        /* Task Cards */
-        .task-card { background: linear-gradient(135deg, var(--bg-card), var(--bg-card-light)); border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
-        .task-info { display: flex; align-items: center; gap: 15px; }
-        .task-icon { font-size: 28px; background: rgba(255,255,255,0.1); width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 12px; }
-        .btn-go { background: var(--gold); color: #000; font-weight: bold; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
+        /* Inputs */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; display: block; }
+        .input-wrapper { display: flex; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; align-items: center;}
+        .input-wrapper input { flex: 1; background: transparent; border: none; color: white; font-size: 20px; outline: none; }
+        .input-suffix { color: var(--text-muted); font-weight: bold; }
 
-        /* My Page */
-        .asset-box { background: linear-gradient(135deg, var(--bg-card), var(--bg-card-light)); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
-        .asset-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .btn-withdraw { width: 100%; background: var(--btn-green); color: white; font-weight: bold; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-size: 16px; }
+        .total-box { background: rgba(0, 209, 178, 0.1); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; font-size: 16px;}
+        .total-box span { font-weight: bold; color: var(--primary); }
+
+        .btn-action { width: 100%; padding: 18px; border-radius: 12px; font-size: 18px; font-weight: bold; border: none; cursor: pointer; color: #000; transition: 0.2s;}
+        .btn-action.buy { background: var(--primary); }
+        .btn-action.sell { background: var(--secondary); color: white; }
+        .btn-action:active { transform: scale(0.98); }
 
         /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #082d16; display: flex; justify-content: space-around; padding: 10px 0 20px 0; border-top: 1px solid var(--border); z-index: 500; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
-        .nav-item.active { color: var(--gold); font-weight: bold; }
-        .nav-icon { font-size: 26px; margin-bottom: 4px; }
-
-        /* Withdraw Modal */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-box { background: var(--bg-main); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; border: 1px solid var(--border); }
-        .pay-methods { display: flex; gap: 10px; margin-bottom: 20px; }
-        .pay-method { flex: 1; text-align: center; padding: 10px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; font-size: 13px;}
-        .pay-method.active { border-color: var(--gold); color: var(--gold); }
-        .input-field { width: 100%; background: #082d16; border: 1px solid var(--border); padding: 14px; border-radius: 10px; color: white; margin-bottom: 15px;}
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-card); display: flex; justify-content: space-around; padding: 10px 0 20px 0; border-top: 1px solid var(--border); z-index: 500; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: var(--text-muted); cursor: pointer; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 24px; margin-bottom: 4px; }
 
         /* Toast */
-        #toast { visibility: hidden; min-width: 250px; background-color: var(--btn-green); color: #fff; text-align: center; border-radius: 10px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-weight: bold;}
-        #toast.show { visibility: visible; opacity: 1; bottom: 120px; }
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--primary); color: #000; text-align: center; border-radius: 10px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; font-weight: bold; }
+        #toast.show { visibility: visible; opacity: 1; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
     <div class="header">
-        <div class="user-profile">
-            <div class="avatar">🐶</div>
-            <div class="user-details">
-                <span class="user-name" id="display-name">POP</span>
-                <span class="user-id" id="display-id">ID: ...</span>
-            </div>
-        </div>
-        <div class="balances">
-            <div class="balance-pill">🪙 <span id="header-ecx">0</span></div>
-            <div class="balance-pill">🌍 <span id="header-spins">1</span></div>
-            <div class="balance-pill">💎 <span id="header-gems">115</span></div>
-        </div>
+        <div class="logo">🟢 QvaPay P2P</div>
+        <div class="user-id">ID: <span id="display-id">...</span></div>
     </div>
 
-    <!-- ================= SPIN PAGE ================= -->
-    <div id="page-spin" class="page active">
-        <div class="spin-page-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
-                <p class="cash-out-text">Only <span>$0.45</span> to cash out</p>
-                <div style="background: #082d16; padding: 8px 15px; border-radius: 10px; border: 1px solid var(--border);">
-                    <span style="color: var(--gold); font-weight: bold; font-size: 20px;">$0.55</span>
-                </div>
-            </div>
-            
-            <div class="progress-container">
-                <div class="progress-bar"></div>
-                <span class="progress-text">$1</span>
-            </div>
-            
-            <div class="wheel-wrapper">
-                <div class="wheel-pointer"></div>
-                <div class="wheel-outer-ring">
-                    <div class="wheel" id="fortune-wheel"></div>
-                </div>
-                <div class="spin-btn" id="spin-button" onclick="spinWheel()">
-                    SPIN
-                    <span><span id="spin-count">1</span> 🌍</span>
-                </div>
-            </div>
+    <!-- ================= TRADE PAGE ================= -->
+    <div id="page-trade" class="page active">
+        
+        <div class="trade-tabs">
+            <div class="tab active-buy" id="tab-buy" onclick="setTradeType('buy')">Buy USDT</div>
+            <div class="tab" id="tab-sell" onclick="setTradeType('sell')">Sell USDT</div>
+        </div>
 
-            <!-- Invite Section -->
-            <div class="invite-container">
-                <button class="invite-btn" onclick="shareInvite()">
-                    🎟️ Invite for Spins!
-                </button>
-                <div class="copy-btn" onclick="copyInviteLink()">📋</div>
-            </div>
+        <div class="market-card">
+            <div class="market-title">QvaPay Market Price</div>
+            <div class="market-price" id="market-price">1.00 <span>USD / USDT</span></div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Rate updated from QvaPay API</div>
+        </div>
 
-            <div class="share-to">
-                Share To: 
-                <div class="share-icon whatsapp" onclick="shareTo('whatsapp')">W</div>
-                <div class="share-icon twitter" onclick="shareTo('twitter')">X</div>
-                <div class="share-icon facebook" onclick="shareTo('facebook')">f</div>
+        <div class="input-group">
+            <label id="amount-label">I want to Buy (USDT)</label>
+            <div class="input-wrapper">
+                <input type="number" id="usdt-amount" placeholder="0.00" oninput="calculateTotal()">
+                <span class="input-suffix">USDT</span>
             </div>
         </div>
-    </div>
 
-    <!-- ================= EARN PAGE ================= -->
-    <div id="page-earn" class="page">
-        <h2 style="margin-bottom: 20px;">Earn Tasks</h2>
-        <div class="task-card">
-            <div class="task-info">
-                <div class="task-icon">🎁</div>
-                <div>
-                    <h3>Watch Ads & Open Chests</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">Earned 0 ECX today</p>
-                </div>
-            </div>
-            <button class="btn-go" onclick="doTask('Watch Ads', event)">GO</button>
+        <div class="total-box">
+            <span>Total to Pay:</span>
+            <span id="total-price">0.00 USD</span>
         </div>
-        <div class="task-card">
-            <div class="task-info">
-                <div class="task-icon">🌐</div>
-                <div>
-                    <h3>Visit official website</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">🪙 +1 ECX</p>
-                </div>
-            </div>
-            <button class="btn-go" onclick="doTask('Visit Website', event)">GO</button>
-        </div>
-    </div>
 
-    <!-- ================= MY PAGE ================= -->
-    <div id="page-my" class="page">
-        <div class="asset-box">
-            <div class="asset-header">
-                <div style="font-size: 18px; font-weight: bold;">🪙 ECX Balance</div>
-                <div style="font-size: 24px; font-weight: bold;" id="wallet-ecx">0</div>
-            </div>
-            <button class="btn-withdraw" onclick="openWithdraw()">Withdraw Funds</button>
-        </div>
+        <button class="btn-action buy" id="action-btn" onclick="submitTrade()">Buy USDT Now</button>
     </div>
 
     <!-- ================= BOTTOM NAV ================= -->
     <div class="bottom-nav">
-        <div class="nav-item" onclick="switchPage('earn', this)"><div class="nav-icon">💰</div>Earn</div>
-        <div class="nav-item active" onclick="switchPage('spin', this)"><div class="nav-icon">🎡</div>Spin</div>
-        <div class="nav-item" onclick="switchPage('my', this)"><div class="nav-icon">👤</div>My</div>
+        <div class="nav-item active" onclick="switchPage('trade', this)"><div class="nav-icon">💱</div>Trade</div>
+        <div class="nav-item" onclick="switchPage('wallet', this)"><div class="nav-icon">👛</div>Wallet</div>
     </div>
 
-    <!-- ================= WITHDRAW MODAL ================= -->
-    <div class="modal-overlay" id="withdraw-modal">
-        <div class="modal-box">
-            <h2 style="text-align: center; margin-bottom: 20px;">Withdraw</h2>
-            <div class="pay-methods">
-                <div class="pay-method active" onclick="selectMethod('Telebirr', this)">Telebirr</div>
-                <div class="pay-method" onclick="selectMethod('Ebirr', this)">Ebirr</div>
-                <div class="pay-method" onclick="selectMethod('Mobile Card', this)">Mobile Card</div>
-            </div>
-            <input type="text" id="w-account" class="input-field" placeholder="Enter Phone/Account Number">
-            <input type="number" class="input-field" placeholder="Enter Amount">
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button style="flex: 1; padding: 15px; border-radius: 10px; border: none; background: #333; color: white; font-weight: bold;" onclick="closeWithdraw()">Cancel</button>
-                <button style="flex: 1; padding: 15px; border-radius: 10px; border: none; background: var(--btn-green); color: white; font-weight: bold;" onclick="submitWithdraw()">Submit</button>
-            </div>
+    <!-- ================= WALLET PAGE ================= -->
+    <div id="page-wallet" class="page">
+        <h2 style="margin-bottom: 20px;">My Assets</h2>
+        <div class="market-card">
+            <div class="market-title">Available Balance</div>
+            <div class="market-price" style="color: var(--primary);">0.00 <span>USDT</span></div>
         </div>
     </div>
 
-    <div id="toast">Action Successful!</div>
+    <div id="toast">Processing...</div>
 
     <script>
-        // Global Variables
-        let currentSpins = 1;
-        let currentEcx = 0;
-        let isSpinning = false;
-        const BOT_USERNAME = "GIFT_bot"; // ⚠️ የቦትህን ዩዘርኔም እዚህ አስተካክል
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-        window.onload = function() {
-            const tg = window.Telegram.WebApp;
-            tg.expand();
+        let tradeType = 'buy'; 
+        let currentRate = 1.00; // QvaPay የገበያ ዋጋ (1 USDT = 1 USD)
 
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                document.getElementById('display-name').innerText = tg.initDataUnsafe.user.first_name;
-                document.getElementById('display-id').innerText = 'ID ' + tg.initDataUnsafe.user.id;
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('display-id').innerText = tg.initDataUnsafe.user.id;
+        }
+
+        // 1. Tab Switching Logic
+        window.setTradeType = function(type) {
+            tradeType = type;
+            const tabBuy = document.getElementById('tab-buy');
+            const tabSell = document.getElementById('tab-sell');
+            const actionBtn = document.getElementById('action-btn');
+
+            if(type === 'buy') {
+                tabBuy.className = 'tab active-buy';
+                tabSell.className = 'tab';
+                actionBtn.className = 'btn-action buy';
+                actionBtn.innerText = "Buy USDT Now";
+                document.getElementById('amount-label').innerText = "I want to Buy (USDT)";
+            } else {
+                tabBuy.className = 'tab';
+                tabSell.className = 'tab active-sell';
+                actionBtn.className = 'btn-action sell';
+                actionBtn.innerText = "Sell USDT Now";
+                document.getElementById('amount-label').innerText = "I want to Sell (USDT)";
+            }
+            document.getElementById('usdt-amount').value = '';
+            calculateTotal();
+        };
+
+        // 2. Calculate Total
+        window.calculateTotal = function() {
+            const amount = parseFloat(document.getElementById('usdt-amount').value) || 0;
+            const total = amount * currentRate;
+            document.getElementById('total-price').innerText = total.toFixed(2) + " USD";
+        };
+
+        // 3. Submit to Admin
+        window.submitTrade = function() {
+            const amount = parseFloat(document.getElementById('usdt-amount').value);
+            if(!amount || amount <= 0) {
+                showToast("❌ Enter a valid amount!");
+                return;
             }
 
-            window.switchPage = function(pageId, navElement) {
-                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-                document.getElementById('page-' + pageId).classList.add('active');
-                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-                navElement.classList.add('active');
-            };
+            const total = amount * currentRate;
+            const user = tg.initDataUnsafe.user;
 
-            // --- የማሽከርከሪያ ስራ (Spin Logic) ---
-            window.spinWheel = function() {
-                if(isSpinning) return;
-                if(currentSpins <= 0) {
-                    showToast("❌ No spins left! Invite friends to get more.");
-                    return;
+            // ወደ Termux ሰርቨር መላክ
+            fetch('/api/complete_task', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    task_name: `${tradeType.toUpperCase()} USDT (QvaPay)`, 
+                    user_id: user.id, 
+                    username: user.username || user.first_name,
+                    details: `Amount: ${amount} USDT | Total: ${total.toFixed(2)} USD`
+                })
+            }).then(res => res.json()).then(data => { 
+                if(data.status === "success") {
+                    showToast(`✅ Request sent to Admin!`);
+                    document.getElementById('usdt-amount').value = '';
+                    calculateTotal();
                 }
+            }).catch(err => showToast("❌ Error connecting to server"));
+        };
 
-                isSpinning = true;
-                currentSpins--;
-                document.getElementById('spin-count').innerText = currentSpins;
-                document.getElementById('header-spins').innerText = currentSpins;
+        window.switchPage = function(pageId, navElement) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            navElement.classList.add('active');
+        };
 
-                let wheel = document.getElementById('fortune-wheel');
-                let randomDeg = Math.floor(1000 + Math.random() * 3600);
-                
-                wheel.style.transform = `rotate(${randomDeg}deg)`;
-
-                setTimeout(() => {
-                    isSpinning = false;
-                    let winAmount = Math.floor(Math.random() * 50) + 10; // በዘፈቀደ ቁጥር ያሸንፋል
-                    showToast(`🎉 You won ${winAmount} ECX!`);
-                    
-                    currentEcx += winAmount;
-                    document.getElementById('header-ecx').innerText = currentEcx;
-                    document.getElementById('wallet-ecx').innerText = currentEcx;
-
-                    // ለአድሚን መልእክት መላክ
-                    sendToAdmin(`Spin Won`, `Won: ${winAmount} ECX`);
-                }, 4000);
-            };
-
-            // --- የመጋበዣ (Invite) ስራ ---
-            window.shareInvite = function() {
-                const link = `https://t.me/${BOT_USERNAME}?start=${tg.initDataUnsafe.user.id}`;
-                const text = `🎉 Join EarnCraft and win real cash! Use my link to get a free spin:`;
-                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
-                
-                // ለሙከራ ያህል ተጠቃሚው ሲጋብዝ ቲኬት ይጨመርለታል
-                currentSpins++;
-                document.getElementById('spin-count').innerText = currentSpins;
-                document.getElementById('header-spins').innerText = currentSpins;
-                showToast("✅ Link Shared! +1 Spin Added.");
-            };
-
-            window.copyInviteLink = function() {
-                const link = `https://t.me/${BOT_USERNAME}?start=${tg.initDataUnsafe.user.id}`;
-                navigator.clipboard.writeText(link);
-                showToast("🔗 Link Copied!");
-            };
-
-            // --- የታስክ ስራ ---
-            window.doTask = function(taskName, event) {
-                let current = parseInt(document.getElementById('header-ecx').innerText) + 1;
-                document.getElementById('header-ecx').innerText = current;
-                document.getElementById('wallet-ecx').innerText = current;
-                showToast("✅ Task Completed!");
-                sendToAdmin(taskName, "Completed");
-            };
-
-            // --- የዊዝድራው ስራ ---
-            window.openWithdraw = function() {
-                document.getElementById('withdraw-modal').style.display = 'flex';
-            };
-            window.closeWithdraw = function() {
-                document.getElementById('withdraw-modal').style.display = 'none';
-            };
-            window.selectMethod = function(method, element) {
-                document.querySelectorAll('.pay-method').forEach(el => el.classList.remove('active'));
-                element.classList.add('active');
-            };
-            window.submitWithdraw = function() {
-                const account = document.getElementById('w-account').value;
-                if(!account) return alert("Please enter account details!");
-                
-                sendToAdmin("Withdraw Request", `Account: ${account}`);
-                showToast("✅ Withdraw Request Sent!");
-                closeWithdraw();
-            };
-
-            // --- ረዳት ተግባራት (Helpers) ---
-            function sendToAdmin(action, details) {
-                fetch('/api/complete_task', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        task_name: action, 
-                        user_id: tg.initDataUnsafe.user.id, 
-                        username: tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name,
-                        details: details
-                    })
-                });
-            }
-
-            window.showToast = function(msg) {
-                const toast = document.getElementById("toast"); 
-                toast.innerText = msg; 
-                toast.className = "show";
-                setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
-            };
+        window.showToast = function(msg) {
+            const toast = document.getElementById("toast"); 
+            toast.innerText = msg; 
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
         };
     </script>
 </body>
