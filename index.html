@@ -114,17 +114,13 @@
         <h1 class="lock-title">Access Required</h1>
         <p class="lock-desc">Join all official channels to verify and unlock the app.</p>
         
-        <!-- Channel 1 -->
-        <a href="https://t.me/ych90b" target="_blank" class="join-btn" onclick="markJoined(this)">
+        <!-- Channel 1 (Updated to t_hacker11) -->
+        <a href="https://t.me/t_hacker11" target="_blank" class="join-btn" onclick="markJoined(this)">
             <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 1</div>
             <div class="join-action">Join ➔</div>
         </a>
+        
         <!-- Channel 2 -->
-        <a href="https://t.me/H8TUNNEL" target="_blank" class="join-btn" onclick="markJoined(this)">
-            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 2</div>
-            <div class="join-action">Join ➔</div>
-        </a>
-        <!-- Channel 3 -->
         <a href="https://t.me/hdj002c" target="_blank" class="join-btn" onclick="markJoined(this)">
             <div class="join-btn-left"><div class="join-icon">✈️</div> Payout Proofs</div>
             <div class="join-action">Join ➔</div>
@@ -242,7 +238,6 @@
             document.getElementById('ref-link').innerText = "https://t.me/YourBot?start=" + tg.initDataUnsafe.user.id;
         }
 
-        // --- Channel Logic ---
         function markJoined(element) {
             if(!element.classList.contains('active')){
                 element.classList.add('active');
@@ -250,37 +245,29 @@
                 element.querySelector('.join-action').style.color = "var(--green)";
                 joinedCount++;
             }
-            if(joinedCount >= 3) {
+            if(joinedCount >= 2) {
                 const btn = document.getElementById('verifyBtn');
                 btn.classList.add('ready');
                 btn.innerText = "Verified! Click to Continue";
             }
         }
 
-        // --- Money Animation Logic ---
         function createMoneyAnimation(e) {
             let x = e.clientX || window.innerWidth / 2;
             let y = e.clientY || window.innerHeight / 2;
-            
             for(let i=0; i<8; i++) {
                 let particle = document.createElement('div');
                 particle.classList.add('money-particle');
-                particle.innerText = '💵'; // Money emoji
-                
-                // Randomize start position slightly around the click
+                particle.innerText = '💵'; 
                 let offsetX = (Math.random() - 0.5) * 100;
                 let offsetY = (Math.random() - 0.5) * 50;
-                
                 particle.style.left = (x + offsetX) + 'px';
                 particle.style.top = (y + offsetY) + 'px';
                 document.body.appendChild(particle);
-                
-                // Remove element after animation ends
                 setTimeout(() => { particle.remove(); }, 1000);
             }
         }
 
-        // --- Math Generator ---
         let currentAnswer = 0;
         function openMathModal() { 
             const num1 = Math.floor(Math.random() * 9) + 1;
@@ -305,7 +292,6 @@
             }
         }
 
-        // --- Navigation ---
         function switchPage(pageId, navElement) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
@@ -313,7 +299,6 @@
             navElement.classList.add('active');
         }
 
-        // --- Payment Methods ---
         function selectMethod(method, element) {
             document.querySelectorAll('.pay-method').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
@@ -330,23 +315,15 @@
 
         function copyLink() { navigator.clipboard.writeText(document.getElementById('ref-link').innerText); showToast("Link Copied!"); }
         
-        // --- Task Trigger with Animation & Ban Check ---
         function triggerTask(taskName, event) {
             if (!tg.initDataUnsafe.user) return alert("Please open inside Telegram");
-            
-            // Play Animation
             createMoneyAnimation(event);
-
-            // Send to Backend
             fetch('/api/complete_task', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ task_name: taskName, user_id: tg.initDataUnsafe.user.id, username: tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name })
             }).then(res => res.json()).then(data => { 
                 if(data.status === "success") {
                     showToast("✅ Sent to Admin!");
-                } else if(data.status === "banned") {
-                    alert("🚫 You have been banned for using multiple accounts!");
-                    tg.close();
                 }
             }).catch(err => showToast("❌ Error connecting"));
         }
