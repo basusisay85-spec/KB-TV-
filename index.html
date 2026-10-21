@@ -1,18 +1,3 @@
-import logging
-import requests
-from flask import Flask, request, jsonify
-from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
-import threading
-import asyncio
-
-# ================= ማስተካከያዎች =================
-BOT_TOKEN = '7230592055:AAGmi1Xxv-wjzAkKhV-XY1gejQtIg4g3Yrk'
-WEB_APP_URL = 'https://your-github-pages-link.com' # ⚠️ እዚህ ጋር የእርስዎን ሊንክ ያስገቡ
-ADMIN_ID = 7074412278
-
-# ================= የ HTML ኮድ =================
-HTML_CODE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,19 +10,30 @@ HTML_CODE = """
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-light); padding-bottom: 80px; overflow-x: hidden; }
         
+        /* --- Animations --- */
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(242, 59, 93, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes glow { from { box-shadow: 0 0 5px var(--green); } to { box-shadow: 0 0 20px var(--green); } }
+
+        /* Lock Screen */
         #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 1000; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        .lock-icon-container { width: 80px; height: 80px; background: rgba(242, 59, 93, 0.1); border-radius: 20px; display: flex; justify-content: center; align-items: center; margin-top: 40px; margin-bottom: 20px; border: 1px solid rgba(242, 59, 93, 0.3); }
+        .lock-icon-container { width: 80px; height: 80px; background: rgba(242, 59, 93, 0.1); border-radius: 20px; display: flex; justify-content: center; align-items: center; margin-top: 40px; margin-bottom: 20px; border: 1px solid rgba(242, 59, 93, 0.3); animation: pulse 2s infinite; }
         .lock-icon-container svg { width: 40px; fill: var(--primary-red); }
-        .lock-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-        .lock-desc { color: var(--text-muted); text-align: center; margin-bottom: 30px; font-size: 14px; }
-        .join-btn { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-light); }
+        .lock-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; animation: slideUp 0.5s ease-out; }
+        .lock-desc { color: var(--text-muted); text-align: center; margin-bottom: 30px; font-size: 14px; animation: slideUp 0.6s ease-out; }
+        
+        .join-btn { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-light); text-decoration: none; transition: 0.3s; animation: slideUp 0.7s ease-out;}
+        .join-btn:active { background: #2a2a38; transform: scale(0.98); }
         .join-btn-left { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px;}
         .join-icon { width: 24px; height: 24px; background: #3b3b4d; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px;}
-        .join-action { color: var(--green); font-size: 12px; font-weight: bold; background: rgba(46, 204, 113, 0.1); padding: 6px 10px; border-radius: 6px;}
-        .main-btn { width: 100%; background: var(--primary-red); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        .join-action { color: var(--green); font-size: 12px; font-weight: bold; background: rgba(46, 204, 113, 0.1); padding: 6px 10px; border-radius: 6px; animation: glow 1.5s infinite alternate;}
         
+        .main-btn { width: 100%; background: var(--primary-red); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; animation: slideUp 0.8s ease-out; transition: 0.2s;}
+        .main-btn:active { transform: scale(0.95); }
+        
+        /* Math Modal */
         #math-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--card-bg); padding: 30px 20px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--border-color); }
+        .modal-content { background: var(--card-bg); padding: 30px 20px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--border-color); animation: slideUp 0.3s ease-out;}
         .robot-icon { width: 60px; height: 60px; background: rgba(242, 59, 93, 0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto; font-size: 30px; border: 1px solid rgba(242, 59, 93, 0.3); }
         .math-box { background: #14141a; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; font-size: 24px; font-family: monospace; margin: 20px 0; letter-spacing: 3px; }
         #math-input { width: 100%; background: #14141a; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; color: white; font-size: 16px; text-align: center; outline: none; margin-bottom: 20px; }
@@ -46,12 +42,12 @@ HTML_CODE = """
         .btn-cancel { background: #323242; color: white; }
         .btn-verify { background: var(--primary-red); color: white; }
 
+        /* Main App */
         #main-app { display: none; } 
         .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; font-size: 18px; font-weight: bold; }
         .user-id { background: #111; padding: 5px 12px; border-radius: 15px; font-size: 12px; color: var(--primary-red); font-weight: normal; }
-        .page { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .page { display: none; padding: 20px; animation: slideUp 0.3s ease-out; }
         .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .balance-card { background: linear-gradient(135deg, #2a1f2d, #1f1f26); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(242, 59, 93, 0.2); }
         .balance-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
@@ -61,12 +57,13 @@ HTML_CODE = """
         .stat-box { flex: 1; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
         .stat-box-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
         .stat-box-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
-        .action-card { background: var(--card-bg); border-radius: 15px; padding: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); border-left: 3px solid var(--primary-red); }
+        .action-card { background: var(--card-bg); border-radius: 15px; padding: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); border-left: 3px solid var(--primary-red); transition: 0.2s; }
+        .action-card:active { transform: scale(0.98); }
         .action-card.green-border { border-left-color: var(--green); }
         .action-card.yellow-border { border-left-color: #f1c40f; }
         .action-card-info h3 { font-size: 16px; margin-bottom: 4px; }
         .action-card-info p { font-size: 12px; color: var(--text-muted); }
-        .btn-small { background: transparent; color: var(--green); border: none; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .btn-small { background: transparent; color: var(--green); border: none; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none;}
         .btn-small.red { color: var(--primary-red); }
 
         .task-title { font-size: 12px; color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between;}
@@ -75,7 +72,8 @@ HTML_CODE = """
         .task-card-header h3 { font-size: 18px; }
         .badge { background: rgba(242, 59, 93, 0.1); color: var(--primary-red); font-size: 12px; padding: 4px 8px; border-radius: 8px; }
         .task-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
-        .task-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; background: var(--primary-red); color: white;}
+        .task-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; background: var(--primary-red); color: white; transition: 0.2s;}
+        .task-btn:active { transform: scale(0.95); }
 
         .invite-box { background: #14141a; border: 1px solid var(--border-color); border-radius: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
         .invite-link { font-size: 14px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
@@ -85,16 +83,21 @@ HTML_CODE = """
         .wallet-balance { font-size: 36px; font-weight: bold; margin: 10px 0;}
         .req-tags { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
         .req-tag { background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 10px; font-size: 12px; }
+        
+        .payment-methods { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;}
+        .pay-method { flex: 0 0 auto; padding: 10px 15px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border-color); font-size: 14px; cursor: pointer; transition: 0.2s;}
+        .pay-method.active { border-color: var(--primary-red); background: rgba(242, 59, 93, 0.1); color: var(--primary-red); font-weight: bold;}
+
         .input-group { margin-bottom: 20px; }
         .input-group label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block; text-transform: uppercase;}
         .input-field { width: 100%; background: #111; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; color: white; font-size: 16px; }
         .withdraw-btn { width: 100%; background: #333; color: #666; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: not-allowed;}
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); display: flex; justify-content: space-around; padding: 12px 0 20px 0; border-top: 1px solid var(--border-color); z-index: 500; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-muted); cursor: pointer; }
-        .nav-item svg { width: 24px; height: 24px; fill: var(--text-muted); margin-bottom: 4px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: 0.2s;}
+        .nav-item svg { width: 24px; height: 24px; fill: var(--text-muted); margin-bottom: 4px; transition: 0.2s;}
         .nav-item.active { color: var(--primary-red); }
-        .nav-item.active svg { fill: var(--primary-red); }
+        .nav-item.active svg { fill: var(--primary-red); transform: translateY(-3px); }
 
         #toast { visibility: hidden; min-width: 250px; background-color: var(--green); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; font-size: 14px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-weight: bold;}
         #toast.show { visibility: visible; opacity: 1; bottom: 120px; }
@@ -106,10 +109,20 @@ HTML_CODE = """
         <div class="lock-icon-container"><svg viewBox="0 0 24 24"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm3 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></div>
         <h1 class="lock-title">Access Required</h1>
         <p class="lock-desc">Join our official channels to verify your identity and unlock the application.</p>
-        <button class="join-btn" onclick="openMathModal()"><div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 1</div><div class="join-action">Join ➔</div></button>
-        <button class="join-btn" onclick="openMathModal()"><div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 2</div><div class="join-action">Join ➔</div></button>
-        <button class="join-btn" onclick="openMathModal()"><div class="join-btn-left"><div class="join-icon">✈️</div> Payout Proofs</div><div class="join-action">Join ➔</div></button>
-        <button class="join-btn" onclick="openMathModal()"><div class="join-btn-left"><div class="join-icon">✈️</div> Bonus Channel</div><div class="join-action">Join ➔</div></button>
+        
+        <a href="https://t.me/ych90b" target="_blank" class="join-btn">
+            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 1</div><div class="join-action">Join ➔</div>
+        </a>
+        <a href="https://t.me/H8TUNNEL" target="_blank" class="join-btn">
+            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 2</div><div class="join-action">Join ➔</div>
+        </a>
+        <a href="https://t.me/hdj002c" target="_blank" class="join-btn">
+            <div class="join-btn-left"><div class="join-icon">✈️</div> Payout Proofs</div><div class="join-action">Join ➔</div>
+        </a>
+        <a href="https://t.me/hdj002c" target="_blank" class="join-btn">
+            <div class="join-btn-left"><div class="join-icon">✈️</div> Bonus Channel</div><div class="join-action">Join ➔</div>
+        </a>
+        
         <button class="main-btn" onclick="openMathModal()">Verify & Continue</button>
     </div>
 
@@ -118,7 +131,7 @@ HTML_CODE = """
             <div class="robot-icon">🤖</div>
             <h2>Human Check</h2>
             <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">For security reasons, please calculate the sum below.</p>
-            <div class="math-box">6 + 1 = ?</div>
+            <div class="math-box" id="math-question">6 + 1 = ?</div>
             <input type="number" id="math-input" placeholder="Enter answer here...">
             <div class="modal-actions">
                 <button class="modal-btn btn-cancel" onclick="closeMathModal()">Cancel</button>
@@ -142,7 +155,7 @@ HTML_CODE = """
                     <div class="stat-box"><div><div class="stat-box-title">Tasks Done</div><div class="stat-box-value">0</div></div><div style="color: var(--primary-red);">⚡</div></div>
                 </div>
             </div>
-            <div class="action-card green-border"><div class="action-card-info"><h3>Public Payout Channel</h3><p>See live withdrawal proofs 💸</p></div><button class="btn-small">JOIN ➔</button></div>
+            <div class="action-card green-border"><div class="action-card-info"><h3>Public Payout Channel</h3><p>See live withdrawal proofs 💸</p></div><a href="https://t.me/hdj002c" target="_blank" class="btn-small">JOIN ➔</a></div>
             <div class="action-card"><div class="action-card-info"><h3>Increase Instagram Followers</h3><p>Likes, Views, etc... 🚀</p></div><button class="btn-small red">OPEN ➔</button></div>
             <div class="action-card yellow-border"><div class="action-card-info"><h3>Earning Leaderboard</h3><p>Top 10 Earners 🏆</p></div><button class="btn-small" style="color: #f1c40f;">VIEW ➔</button></div>
         </div>
@@ -166,7 +179,7 @@ HTML_CODE = """
             <p style="text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 30px;">Invite your friends and earn a <strong style="color:var(--primary-red)">100 Gems</strong> bonus!</p>
             <label style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Your Personal Invite Link</label>
             <div class="invite-box">
-                <div class="invite-link" id="ref-link">https://t.me/Gems_Earn_Bot?start=...</div>
+                <div class="invite-link" id="ref-link">https://t.me/YourBot?start=...</div>
                 <button class="copy-btn" onclick="copyLink()">📋</button>
             </div>
             <button class="main-btn" style="margin-top: 0;">🔗 Share Link to Friends</button>
@@ -182,15 +195,23 @@ HTML_CODE = """
                     <div class="req-tag">▶️ 5 PREMIUM ADS</div>
                 </div>
             </div>
+
+            <!-- Payment Methods Selection -->
+            <div class="payment-methods">
+                <div class="pay-method active" onclick="selectMethod('USDT', this)">USDT (BEP20)</div>
+                <div class="pay-method" onclick="selectMethod('Binance', this)">Binance ID</div>
+                <div class="pay-method" onclick="selectMethod('Telebirr', this)">Telebirr/Ebirr</div>
+            </div>
+
             <div class="input-group">
-                <label>1. Enter USDT (BEP20) Address</label>
-                <input type="text" class="input-field" placeholder="0x...">
+                <label id="wallet-label">1. Enter USDT (BEP20) Address</label>
+                <input type="text" class="input-field" id="wallet-address" placeholder="0x...">
             </div>
             <div class="input-group">
                 <label>2. Amount to withdraw (GEMS)</label>
                 <input type="number" class="input-field" placeholder="Min 500 / Max 10000">
             </div>
-            <button class="withdraw-btn">WITHDRAW USDT</button>
+            <button class="withdraw-btn">WITHDRAW FUNDS</button>
         </div>
 
         <div class="bottom-nav">
@@ -200,39 +221,83 @@ HTML_CODE = """
             <div class="nav-item" onclick="switchPage('wallet', this)"><svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>WALLET</div>
         </div>
     </div>
-    <div id="toast">Task Sent to Admin!</div>
+    <div id="toast">Action Successful!</div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             document.getElementById('user-id-display').innerText = tg.initDataUnsafe.user.id;
-            document.getElementById('ref-link').innerText = "https://t.me/Gems_Earn_Bot?start=" + tg.initDataUnsafe.user.id;
+            document.getElementById('ref-link').innerText = "https://t.me/YourBot?start=" + tg.initDataUnsafe.user.id;
         }
-        function openMathModal() { document.getElementById('math-modal').style.display = 'flex'; }
+
+        // --- Random Math Generator ---
+        let currentAnswer = 0;
+        function openMathModal() { 
+            const num1 = Math.floor(Math.random() * 9) + 1;
+            const num2 = Math.floor(Math.random() * 9) + 1;
+            currentAnswer = num1 + num2;
+            
+            document.getElementById('math-question').innerText = num1 + " + " + num2 + " = ?";
+            document.getElementById('math-input').value = '';
+            document.getElementById('math-modal').style.display = 'flex'; 
+        }
+        
         function closeMathModal() { document.getElementById('math-modal').style.display = 'none'; }
+        
         function checkMath() {
-            if (document.getElementById('math-input').value === '7') {
+            const userAnswer = parseInt(document.getElementById('math-input').value);
+            if (userAnswer === currentAnswer) {
                 document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'block';
                 closeMathModal();
-            } else { alert('Incorrect'); }
+            } else { 
+                alert('Incorrect answer. Please try again.'); 
+                openMathModal();
+            }
         }
+
+        // --- Navigation ---
         function switchPage(pageId, navElement) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             navElement.classList.add('active');
         }
+
+        // --- Payment Methods ---
+        function selectMethod(method, element) {
+            document.querySelectorAll('.pay-method').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            
+            const label = document.getElementById('wallet-label');
+            const input = document.getElementById('wallet-address');
+            
+            if(method === 'USDT') {
+                label.innerText = "1. Enter USDT (BEP20) Address";
+                input.placeholder = "0x...";
+            } else if(method === 'Binance') {
+                label.innerText = "1. Enter Binance Pay ID";
+                input.placeholder = "e.g. 123456789";
+            } else if(method === 'Telebirr') {
+                label.innerText = "1. Enter Telebirr/Ebirr Number";
+                input.placeholder = "e.g. 0912345678";
+            }
+        }
+
         function copyLink() { navigator.clipboard.writeText(document.getElementById('ref-link').innerText); showToast("Link Copied!"); }
+        
         function triggerTask(taskName) {
-            if (!tg.initDataUnsafe.user) return alert("Open in Telegram");
+            if (!tg.initDataUnsafe.user) return alert("Please open inside Telegram");
+            
+            // ዳታውን ወደ Python ሰርቨር መላክ
             fetch('/api/complete_task', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ task_name: taskName, user_id: tg.initDataUnsafe.user.id, username: tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name })
             }).then(res => res.json()).then(data => { if(data.status === "success") showToast("✅ Sent to Admin!"); })
-              .catch(err => showToast("❌ Error"));
+              .catch(err => showToast("❌ Error connecting"));
         }
+        
         function showToast(msg) {
             const toast = document.getElementById("toast"); toast.innerText = msg; toast.className = "show";
             setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
@@ -240,54 +305,3 @@ HTML_CODE = """
     </script>
 </body>
 </html>
-"""
-
-# ================= የ FLASK ሰርቨር =================
-app = Flask(__name__)
-
-@app.route('/')
-def serve_html():
-    return HTML_CODE
-
-@app.route('/api/complete_task', methods=['POST'])
-def complete_task():
-    data = request.json
-    user_id = data.get('user_id')
-    username = data.get('username')
-    task_name = data.get('task_name')
-    
-    message = f"🔔 *አዲስ ታስክ ተጠናቅቋል!*\n\n*ታስክ፡* {task_name}\n*ተጠቃሚ፡* {username}\n*ID:* `{user_id}`"
-    send_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {'chat_id': ADMIN_ID, 'text': message, 'parse_mode': 'Markdown'}
-    
-    try:
-        requests.post(send_url, json=payload)
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-# ================= የቴሌግራም ቦት =================
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [[InlineKeyboardButton("💎 Open Gems Earn", web_app=WebAppInfo(url=WEB_APP_URL))]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("እንኳን ደህና መጡ! መተግበሪያውን ለመክፈት ከታች ይጫኑ።", reply_markup=reply_markup)
-
-# ================= ማስጀመሪያ =================
-if __name__ == '__main__':
-    # ቦቱ በዋናው ክር (Main Thread) ላይ እንዲሰራ ማድረግ
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
-    application.add_handler(CommandHandler('start', start))
-    
-    # Flask ሰርቨሩን በተለየ ክር (Thread) ላይ ማስኬድ
-    def run_flask():
-        app.run(host='0.0.0.0', port=5000, threaded=True)
-    
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
-    
-    print("Web Server is running on port 5000...")
-    print("Telegram Bot is starting...")
-    
-    # ቦቱ በዋናው ክር ላይ ስለሚሆን ስህተቱ ይፈታል
-    application.run_polling()
