@@ -3,287 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gems Earn App</title>
+    <title>EarnCraft App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg-color: #181820; --card-bg: #23232f; --primary-red: #f23b5d; --text-light: #ffffff; --text-muted: #8b8b9e; --green: #2ecc71; --border-color: #323242; --gold: #f1c40f;}
+        :root {
+            --bg-color: #0b3d1e; /* Deep cool green */
+            --card-bg: #14612e;
+            --card-bg-light: #1b7a3b;
+            --primary-gold: #f1c40f;
+            --text-light: #ffffff;
+            --text-muted: #a3c4b1;
+            --green-btn: #2ecc71;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-light); padding-bottom: 80px; overflow-x: hidden; }
-        
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(242, 59, 93, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .money-particle { position: fixed; font-size: 30px; animation: floatUp 1s ease-out forwards; z-index: 9999; pointer-events: none;}
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-150px) scale(1.5); } }
 
-        #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 1000; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; }
-        .lock-icon-container { width: 80px; height: 80px; background: rgba(242, 59, 93, 0.1); border-radius: 20px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; border: 1px solid rgba(242, 59, 93, 0.3); animation: pulse 2s infinite; }
-        .lock-icon-container svg { width: 40px; fill: var(--primary-red); }
-        .lock-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-        .lock-desc { color: var(--text-muted); text-align: center; margin-bottom: 30px; font-size: 14px; }
-        
-        .join-btn { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-light); text-decoration: none; transition: 0.3s;}
-        .join-btn.active { border-color: var(--green); }
-        .join-btn-left { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px;}
-        .join-icon { width: 24px; height: 24px; background: #3b3b4d; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px;}
-        .join-action { color: var(--green); font-size: 12px; font-weight: bold; background: rgba(46, 204, 113, 0.1); padding: 6px 10px; border-radius: 6px;}
-        
-        .main-btn { width: 100%; background: var(--primary-red); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.3s;}
-        .main-btn.ready { opacity: 1; pointer-events: auto; animation: pulse 2s infinite;}
-        
-        #math-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--card-bg); padding: 30px 20px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--border-color); animation: slideUp 0.3s ease-out;}
-        .robot-icon { width: 60px; height: 60px; background: rgba(242, 59, 93, 0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto; font-size: 30px; border: 1px solid rgba(242, 59, 93, 0.3); }
-        .math-box { background: #14141a; border: 1px solid var(--border-color); padding: 20px; border-radius: 10px; font-size: 24px; font-family: monospace; margin: 20px 0; letter-spacing: 3px; }
-        #math-input { width: 100%; background: #14141a; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; color: white; font-size: 16px; text-align: center; outline: none; margin-bottom: 20px; }
-        .modal-actions { display: flex; gap: 10px; }
-        .modal-btn { flex: 1; padding: 15px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; font-size: 14px;}
-        .btn-cancel { background: #323242; color: white; }
-        .btn-verify { background: var(--primary-red); color: white; }
+        /* Top Header */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #082d16; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+        .user-details { display: flex; flex-direction: column; }
+        .user-name { font-weight: bold; font-size: 16px; }
+        .user-id { font-size: 12px; color: var(--text-muted); }
+        .top-stats { display: flex; gap: 8px; }
+        .stat-pill { background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 20px; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 12px; border: 1px solid var(--border-color);}
 
-        #main-app { display: none; } 
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; font-size: 18px; font-weight: bold; }
-        .user-id { background: #111; padding: 5px 12px; border-radius: 15px; font-size: 12px; color: var(--primary-red); font-weight: normal; }
-        .page { display: none; padding: 20px; animation: slideUp 0.3s ease-out; }
+        /* Pages */
+        .page { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .balance-card { background: linear-gradient(135deg, #2a1f2d, #1f1f26); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(242, 59, 93, 0.2); }
-        .balance-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-        .balance-amount { font-size: 42px; font-weight: bold; margin: 10px 0; display: flex; align-items: baseline; gap: 10px;}
-        .balance-usd { font-size: 14px; color: var(--text-muted); background: #111; padding: 3px 8px; border-radius: 10px;}
-        .stats-row { display: flex; gap: 10px; margin-top: 20px; }
-        .stat-box { flex: 1; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .stat-box-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
-        .stat-box-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
-        .action-card { background: var(--card-bg); border-radius: 15px; padding: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); border-left: 3px solid var(--primary-red); transition: 0.2s; }
-        .action-card:active { transform: scale(0.98); }
-        .action-card.green-border { border-left-color: var(--green); }
-        .action-card.yellow-border { border-left-color: var(--gold); }
-        .action-card-info h3 { font-size: 16px; margin-bottom: 4px; }
-        .action-card-info p { font-size: 12px; color: var(--text-muted); }
-        .btn-small { background: transparent; color: var(--green); border: none; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none;}
-        .btn-small.red { color: var(--primary-red); }
-
-        .task-title { font-size: 12px; color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between;}
-        .task-card-large { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
-        .task-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
-        .task-card-header h3 { font-size: 18px; }
-        .badge { background: rgba(242, 59, 93, 0.1); color: var(--primary-red); font-size: 12px; padding: 4px 8px; border-radius: 8px; }
-        .task-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
-        .task-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; background: var(--primary-red); color: white; transition: 0.2s; overflow: hidden; position: relative;}
-        .task-btn:active { transform: scale(0.95); }
-
-        .invite-box { background: #14141a; border: 1px solid var(--border-color); border-radius: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
-        .invite-link { font-size: 14px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
-        .copy-btn { background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; color: white; cursor: pointer; }
-
-        .wallet-card { background: linear-gradient(135deg, var(--primary-red), #d12b4b); border-radius: 20px; padding: 20px; margin-bottom: 20px; }
-        .wallet-balance { font-size: 36px; font-weight: bold; margin: 10px 0;}
-        .req-tags { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-        .req-tag { background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 10px; font-size: 12px; }
+        /* Cards */
+        .task-card, .action-card {
+            background: linear-gradient(135deg, var(--card-bg), var(--card-bg-light));
+            border-radius: 15px; padding: 15px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .task-info { display: flex; align-items: center; gap: 15px; }
+        .task-icon { font-size: 30px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; }
+        .task-text h3 { font-size: 16px; margin-bottom: 4px; }
+        .task-text p { font-size: 12px; color: var(--text-muted); }
+        .btn-go { background: var(--primary-gold); color: #000; font-weight: bold; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; transition: 0.2s;}
+        .btn-go:active { transform: scale(0.95); }
         
-        .payment-methods { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;}
-        .pay-method { flex: 0 0 auto; padding: 10px 15px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border-color); font-size: 14px; cursor: pointer; transition: 0.2s;}
-        .pay-method.active { border-color: var(--primary-red); background: rgba(242, 59, 93, 0.1); color: var(--primary-red); font-weight: bold;}
+        .reward-tag { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-top: 5px;}
+        .reward-tag img { width: 16px; height: 16px; }
 
-        .input-group { margin-bottom: 20px; }
-        .input-group label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block; text-transform: uppercase;}
-        .input-field { width: 100%; background: #111; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; color: white; font-size: 16px; }
-        .withdraw-btn { width: 100%; background: #333; color: #666; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: not-allowed;}
+        /* Wallet Page */
+        .asset-box { background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .asset-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .asset-amount { font-size: 28px; font-weight: bold; }
+        .btn-withdraw { background: var(--green-btn); color: white; font-weight: bold; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
+        
+        /* Withdraw Modal */
+        #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-color); padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; border: 1px solid var(--border-color); }
+        .modal-content h2 { margin-bottom: 15px; text-align: center; }
+        
+        .pay-methods { display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;}
+        .pay-method { flex: 0 0 auto; padding: 10px 15px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border-color); font-size: 14px; cursor: pointer; color: white; }
+        .pay-method.active { border-color: var(--primary-gold); background: rgba(241, 196, 15, 0.1); color: var(--primary-gold); font-weight: bold; }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); display: flex; justify-content: space-around; padding: 12px 0 20px 0; border-top: 1px solid var(--border-color); z-index: 500; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: 0.2s;}
-        .nav-item svg { width: 24px; height: 24px; fill: var(--text-muted); margin-bottom: 4px; transition: 0.2s;}
-        .nav-item.active { color: var(--primary-red); }
-        .nav-item.active svg { fill: var(--primary-red); transform: translateY(-3px); }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; display: block; }
+        .input-field { width: 100%; background: #082d16; border: 1px solid var(--border-color); padding: 12px; border-radius: 10px; color: white; font-size: 16px; }
+        
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-btn { flex: 1; padding: 15px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-cancel { background: #333; color: white; }
+        .btn-submit { background: var(--green-btn); color: white; }
 
-        #toast { visibility: hidden; min-width: 250px; background-color: var(--green); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; font-size: 14px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-weight: bold;}
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #082d16; display: flex; justify-content: space-around; padding: 10px 0 15px 0; border-top: 1px solid var(--border-color); z-index: 500; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-muted); cursor: pointer; }
+        .nav-item.active { color: var(--primary-gold); font-weight: bold;}
+        .nav-icon { font-size: 24px; margin-bottom: 4px; }
+
+        /* Toast */
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--green-btn); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-weight: bold;}
         #toast.show { visibility: visible; opacity: 1; bottom: 120px; }
     </style>
 </head>
 <body>
 
-    <!-- Lock Screen -->
-    <div id="lock-screen">
-        <div class="lock-icon-container"><svg viewBox="0 0 24 24"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm3 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></div>
-        <h1 class="lock-title">Access Required</h1>
-        <p class="lock-desc">Join our official channel to verify and unlock the app.</p>
-        
-        <!-- Payout Channel Added Here -->
-        <a href="https://t.me/t_12348" target="_blank" class="join-btn" onclick="markJoined(this)">
-            <div class="join-btn-left"><div class="join-icon">✈️</div> Payout Proofs</div>
-            <div class="join-action">Join ➔</div>
-        </a>
-        
-        <button class="main-btn" id="verifyBtn" onclick="openMathModal()">Verify & Continue</button>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="user-info">
+            <div class="user-avatar">🐶</div>
+            <div class="user-details">
+                <span class="user-name" id="display-name">User</span>
+                <span class="user-id" id="display-id">ID: ...</span>
+            </div>
+        </div>
+        <div class="top-stats">
+            <div class="stat-pill">🪙 <span id="ecx-balance">0</span></div>
+            <div class="stat-pill">💎 <span id="gem-balance">115</span></div>
+        </div>
     </div>
 
-    <!-- Math Modal -->
-    <div id="math-modal">
+    <!-- ================= EARN PAGE ================= -->
+    <div id="page-earn" class="page active">
+        <div class="task-card">
+            <div class="task-info">
+                <div class="task-icon">🎁</div>
+                <div class="task-text">
+                    <h3>Watch Ads & Open Chests</h3>
+                    <p>Earned 0 ECX today</p>
+                </div>
+            </div>
+            <button class="btn-go" onclick="triggerTask('Watch Ads', event)">GO</button>
+        </div>
+
+        <h3 style="margin: 20px 0 10px 0; font-size: 18px;">🔥 Special Tasks</h3>
+        
+        <div class="task-card">
+            <div class="task-info">
+                <div class="task-icon">🌐</div>
+                <div class="task-text">
+                    <h3>Visit official website</h3>
+                    <div class="reward-tag">🪙 +1 ECX</div>
+                </div>
+            </div>
+            <button class="btn-go" onclick="triggerTask('Visit Website', event)">GO</button>
+        </div>
+
+        <div class="task-card">
+            <div class="task-info">
+                <div class="task-icon">👥</div>
+                <div class="task-text">
+                    <h3>Invite 5 friends today</h3>
+                    <div class="reward-tag">💎 1500</div>
+                </div>
+            </div>
+            <button class="btn-go" onclick="triggerTask('Invite Friends', event)">GO</button>
+        </div>
+
+        <div class="task-card">
+            <div class="task-info">
+                <div class="task-icon">▶️</div>
+                <div class="task-text">
+                    <h3>Watch Video To Earn (3x)</h3>
+                    <div class="reward-tag">🪙 +1 ECX</div>
+                </div>
+            </div>
+            <button class="btn-go" onclick="triggerTask('Watch Video', event)">GO</button>
+        </div>
+    </div>
+
+    <!-- ================= SPIN PAGE ================= -->
+    <div id="page-spin" class="page">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2>Wheel of Fortune</h2>
+            <p style="color: var(--text-muted); font-size: 14px;">Only $0.45 to cash out</p>
+            <div style="background: #082d16; height: 20px; border-radius: 10px; margin-top: 10px; position: relative; overflow: hidden;">
+                <div style="background: var(--primary-gold); width: 55%; height: 100%;"></div>
+                <span style="position: absolute; right: 10px; top: 0; font-size: 12px; font-weight: bold;">$0.55</span>
+            </div>
+        </div>
+        
+        <!-- Fake Wheel Visual -->
+        <div style="width: 250px; height: 250px; border-radius: 50%; background: conic-gradient(#f1c40f 0deg 45deg, #2ecc71 45deg 90deg, #e74c3c 90deg 135deg, #9b59b6 135deg 180deg, #3498db 180deg 225deg, #e67e22 225deg 270deg, #1abc9c 270deg 315deg, #c0392b 315deg 360deg); margin: 0 auto; position: relative; border: 5px solid #fff; box-shadow: 0 0 20px rgba(241, 196, 15, 0.5); display: flex; justify-content: center; align-items: center;">
+            <div style="width: 80px; height: 80px; background: #082d16; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 3px solid var(--primary-gold);">
+                <span style="font-weight: bold; font-size: 18px;">SPIN</span>
+                <span style="font-size: 12px; color: var(--primary-gold);">1 🌍</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= EVENTS PAGE ================= -->
+    <div id="page-events" class="page">
+        <h2 style="margin-bottom: 15px;">Events</h2>
+        
+        <div class="action-card">
+            <div class="task-info">
+                <div class="task-icon">📅</div>
+                <div class="task-text">
+                    <h3>Sign-in</h3>
+                    <p>Check in every day for rewards.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-card">
+            <div class="task-info">
+                <div class="task-icon">🎟️</div>
+                <div class="task-text">
+                    <h3>Raffle</h3>
+                    <p>Enter the latest draws and check your tickets.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-card">
+            <div class="task-info">
+                <div class="task-icon">🏆</div>
+                <div class="task-text">
+                    <h3>Invite Contest</h3>
+                    <p>Invite friends and compete for prizes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MY PAGE (WALLET) ================= -->
+    <div id="page-my" class="page">
+        <div class="asset-box">
+            <h2 style="margin-bottom: 15px;">My Assets</h2>
+            
+            <div class="asset-row">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 30px;">🪙</div>
+                    <div>
+                        <h3 style="font-size: 16px;">ECX</h3>
+                        <p style="font-size: 12px; color: var(--text-muted);">1 ECX = 0.0005$</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="asset-amount" id="ecx-balance-2">0</div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-withdraw" style="flex: 1;" onclick="openWithdrawModal('ECX')">Withdraw</button>
+            </div>
+        </div>
+
+        <div class="asset-box">
+            <div class="asset-row">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 30px;">💵</div>
+                    <div>
+                        <h3 style="font-size: 16px;">Cash ($)</h3>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="asset-amount">$0.00</div>
+                </div>
+            </div>
+             <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-withdraw" style="flex: 1;" onclick="openWithdrawModal('Cash')">Withdraw</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BOTTOM NAV ================= -->
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="switchPage('earn', this)">
+            <div class="nav-icon">💰</div>Earn
+        </div>
+        <div class="nav-item" onclick="switchPage('spin', this)">
+            <div class="nav-icon">🎡</div>Spin
+        </div>
+        <div class="nav-item" onclick="switchPage('events', this)">
+            <div class="nav-icon">🎉</div>Events
+        </div>
+        <div class="nav-item active" onclick="switchPage('my', this)">
+            <div class="nav-icon">👤</div>My
+        </div>
+    </div>
+
+    <!-- ================= WITHDRAW MODAL ================= -->
+    <div id="withdraw-modal">
         <div class="modal-content">
-            <div class="robot-icon">🤖</div>
-            <h2>Human Check</h2>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Calculate the sum below.</p>
-            <div class="math-box" id="math-question">6 + 1 = ?</div>
-            <input type="number" id="math-input" placeholder="Enter answer here...">
+            <h2>Withdraw Funds</h2>
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Select your preferred payment method</p>
+            
+            <div class="pay-methods">
+                <div class="pay-method active" onclick="selectPayMethod('Telebirr', this)">Telebirr</div>
+                <div class="pay-method" onclick="selectPayMethod('CBE Birr', this)">CBE Birr</div>
+                <div class="pay-method" onclick="selectPayMethod('Ebirr', this)">Ebirr</div>
+                <div class="pay-method" onclick="selectPayMethod('Mobile Card', this)">Mobile Card</div>
+            </div>
+
+            <div class="input-group">
+                <label id="withdraw-label">Telebirr Phone Number</label>
+                <input type="text" id="withdraw-account" class="input-field" placeholder="e.g. 0912345678">
+            </div>
+            
+            <div class="input-group">
+                <label>Amount (ECX)</label>
+                <input type="number" class="input-field" placeholder="Min 5000">
+            </div>
+
             <div class="modal-actions">
-                <button class="modal-btn btn-cancel" onclick="closeMathModal()">Cancel</button>
-                <button class="modal-btn btn-verify" onclick="checkMath()">Verify</button>
+                <button class="modal-btn btn-cancel" onclick="closeWithdrawModal()">Cancel</button>
+                <button class="modal-btn btn-submit" onclick="submitWithdraw()">Submit Request</button>
             </div>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="main-app">
-        <div class="header">
-            <div>💎 Gems Earn</div>
-            <div class="user-id">ID: <span id="user-id-display">...</span></div>
-        </div>
-
-        <div id="page-home" class="page active">
-            <div class="balance-card">
-                <div class="balance-title">Total Balance</div>
-                <div class="balance-amount">0 <span class="balance-usd">≈ $0.0000</span></div>
-                <div class="stats-row">
-                    <div class="stat-box"><div><div class="stat-box-title">Referrals</div><div class="stat-box-value">0</div></div><div style="color: var(--primary-red);">👥</div></div>
-                    <div class="stat-box"><div><div class="stat-box-title">Tasks Done</div><div class="stat-box-value">0</div></div><div style="color: var(--primary-red);">⚡</div></div>
-                </div>
-            </div>
-            <!-- Payout Channel Link on Home Screen -->
-            <div class="action-card green-border">
-                <div class="action-card-info"><h3>Public Payout Channel</h3><p>See live withdrawal proofs 💸</p></div>
-                <a href="https://t.me/t_12348" target="_blank" class="btn-small">JOIN ➔</a>
-            </div>
-            <div class="action-card"><div class="action-card-info"><h3>Increase Instagram Followers</h3><p>Likes, Views, etc... 🚀</p></div><button class="btn-small red">OPEN ➔</button></div>
-        </div>
-
-        <div id="page-earn" class="page">
-            <div class="task-title"><span>Premium Ads</span><span>🕒 Daily Reset</span></div>
-            
-            <div class="task-card-large">
-                <div class="task-card-header"><h3>▶️ Watch & Earn</h3><span class="badge">0/10 Today</span></div>
-                <p class="task-desc">Watch advertisements securely to earn <strong>50 Gems</strong> instantly.</p>
-                <button class="task-btn" onclick="triggerTask('Watch & Earn', event)">Verify to Start</button>
-            </div>
-            
-            <div class="task-card-large">
-                <div class="task-card-header"><h3>🔥 High Reward Task</h3><span class="badge">+1000 💎</span></div>
-                <p class="task-desc">Download App, create new account and earn 1000 Gems instantly!</p>
-                <button class="task-btn" onclick="triggerTask('High Reward Task', event)">OPEN TASK</button>
-            </div>
-        </div>
-
-        <div id="page-friend" class="page">
-            <h2 style="text-align: center; margin-bottom: 10px;">Invite Friends</h2>
-            <p style="text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 30px;">Invite your friends and earn a <strong style="color:var(--primary-red)">100 Gems</strong> bonus!</p>
-            <label style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Your Personal Invite Link</label>
-            <div class="invite-box">
-                <div class="invite-link" id="ref-link">https://t.me/YourBot?start=...</div>
-                <button class="copy-btn" onclick="copyLink()">📋</button>
-            </div>
-            <button class="main-btn" style="margin-top: 0; animation: none; opacity: 1;">🔗 Share Link</button>
-        </div>
-
-        <div id="page-wallet" class="page">
-            <div class="wallet-card">
-                <div style="font-size: 12px; text-transform: uppercase;">Available Balance</div>
-                <div class="wallet-balance">0 <span style="font-size: 16px;">GEMS</span></div>
-                <div class="req-tags">
-                    <div class="req-tag">✔️ MIN 500 GEMS</div>
-                    <div class="req-tag">👥 3 REFERRALS</div>
-                    <div class="req-tag">▶️ 5 PREMIUM ADS</div>
-                </div>
-            </div>
-
-            <div class="payment-methods">
-                <div class="pay-method active" onclick="selectMethod('USDT', this)">USDT (BEP20)</div>
-                <div class="pay-method" onclick="selectMethod('Binance', this)">Binance ID</div>
-                <div class="pay-method" onclick="selectMethod('Telebirr', this)">Telebirr/Ebirr</div>
-            </div>
-
-            <div class="input-group">
-                <label id="wallet-label">1. Enter USDT (BEP20) Address</label>
-                <input type="text" class="input-field" id="wallet-address" placeholder="0x...">
-            </div>
-            <div class="input-group">
-                <label>2. Amount to withdraw (GEMS)</label>
-                <input type="number" class="input-field" placeholder="Min 500 / Max 10000">
-            </div>
-            <button class="withdraw-btn">WITHDRAW FUNDS</button>
-        </div>
-
-        <div class="bottom-nav">
-            <div class="nav-item active" onclick="switchPage('home', this)"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>HOME</div>
-            <div class="nav-item" onclick="switchPage('earn', this)"><svg viewBox="0 0 24 24"><path d="M13 2.05v9.95h9.95c-.5-5.1-4.85-9.45-9.95-9.95zM2.05 11h9.95V2.05C6.9 2.55 2.55 6.9 2.05 11zM11 21.95v-9.95H2.05c.5 5.1 4.85 9.45 9.95 9.95zM21.95 13h-9.95v9.95c5.1-.5 9.45-4.85 9.95-9.95z"/></svg>EARN</div>
-            <div class="nav-item" onclick="switchPage('friend', this)"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>FRIEND</div>
-            <div class="nav-item" onclick="switchPage('wallet', this)"><svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>WALLET</div>
-        </div>
-    </div>
     <div id="toast">Action Successful!</div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        let joinedCount = 0;
 
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('user-id-display').innerText = tg.initDataUnsafe.user.id;
-            document.getElementById('ref-link').innerText = "https://t.me/YourBot?start=" + tg.initDataUnsafe.user.id;
+            document.getElementById('display-name').innerText = tg.initDataUnsafe.user.first_name;
+            document.getElementById('display-id').innerText = 'ID ' + tg.initDataUnsafe.user.id;
         }
 
-        function markJoined(element) {
-            if(!element.classList.contains('active')){
-                element.classList.add('active');
-                element.querySelector('.join-action').innerText = "Joined ✔️";
-                element.querySelector('.join-action').style.color = "var(--green)";
-                joinedCount++;
-            }
-            if(joinedCount >= 1) {
-                const btn = document.getElementById('verifyBtn');
-                btn.classList.add('ready');
-                btn.innerText = "Verified! Click to Continue";
-            }
-        }
-
-        function createMoneyAnimation(e) {
-            let x = e.clientX || window.innerWidth / 2;
-            let y = e.clientY || window.innerHeight / 2;
-            for(let i=0; i<8; i++) {
-                let particle = document.createElement('div');
-                particle.classList.add('money-particle');
-                particle.innerText = '💵'; 
-                let offsetX = (Math.random() - 0.5) * 100;
-                let offsetY = (Math.random() - 0.5) * 50;
-                particle.style.left = (x + offsetX) + 'px';
-                particle.style.top = (y + offsetY) + 'px';
-                document.body.appendChild(particle);
-                setTimeout(() => { particle.remove(); }, 1000);
-            }
-        }
-
-        let currentAnswer = 0;
-        function openMathModal() { 
-            const num1 = Math.floor(Math.random() * 9) + 1;
-            const num2 = Math.floor(Math.random() * 9) + 1;
-            currentAnswer = num1 + num2;
-            document.getElementById('math-question').innerText = num1 + " + " + num2 + " = ?";
-            document.getElementById('math-input').value = '';
-            document.getElementById('math-modal').style.display = 'flex'; 
-        }
-        
-        function closeMathModal() { document.getElementById('math-modal').style.display = 'none'; }
-        
-        function checkMath() {
-            const userAnswer = parseInt(document.getElementById('math-input').value);
-            if (userAnswer === currentAnswer) {
-                document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                closeMathModal();
-            } else { 
-                alert('Incorrect answer. Please try again.'); 
-                openMathModal();
-            }
-        }
+        let currentECX = 0;
 
         function switchPage(pageId, navElement) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -292,35 +315,78 @@
             navElement.classList.add('active');
         }
 
-        function selectMethod(method, element) {
+        // --- Withdraw Logic ---
+        function openWithdrawModal(assetType) {
+            document.getElementById('withdraw-modal').style.display = 'flex';
+        }
+
+        function closeWithdrawModal() {
+            document.getElementById('withdraw-modal').style.display = 'none';
+        }
+
+        function selectPayMethod(method, element) {
             document.querySelectorAll('.pay-method').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
-            const label = document.getElementById('wallet-label');
-            const input = document.getElementById('wallet-address');
-            if(method === 'USDT') {
-                label.innerText = "1. Enter USDT (BEP20) Address"; input.placeholder = "0x...";
-            } else if(method === 'Binance') {
-                label.innerText = "1. Enter Binance Pay ID"; input.placeholder = "e.g. 123456789";
-            } else if(method === 'Telebirr') {
-                label.innerText = "1. Enter Telebirr/Ebirr Number"; input.placeholder = "e.g. 0912345678";
+            
+            const label = document.getElementById('withdraw-label');
+            const input = document.getElementById('withdraw-account');
+            
+            if(method === 'Telebirr') {
+                label.innerText = "Telebirr Phone Number"; input.placeholder = "e.g. 0912345678";
+            } else if(method === 'CBE Birr') {
+                label.innerText = "CBE Birr Account"; input.placeholder = "e.g. 1000123456789";
+            } else if(method === 'Ebirr') {
+                label.innerText = "Ebirr Number"; input.placeholder = "e.g. 0912345678";
+            } else if(method === 'Mobile Card') {
+                label.innerText = "Mobile Card Number"; input.placeholder = "e.g. 1234567890";
             }
         }
 
-        function copyLink() { navigator.clipboard.writeText(document.getElementById('ref-link').innerText); showToast("Link Copied!"); }
-        
+        function submitWithdraw() {
+            const account = document.getElementById('withdraw-account').value;
+            if(!account) {
+                alert("Please enter account details!");
+                return;
+            }
+            
+            // Send to backend
+            fetch('/api/withdraw_request', {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    user_id: tg.initDataUnsafe.user.id, 
+                    username: tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name,
+                    method: document.querySelector('.pay-method.active').innerText,
+                    account: account
+                })
+            }).then(res => res.json()).then(data => { 
+                if(data.status === "success") {
+                    showToast("✅ Request Sent to Admin!");
+                    closeWithdrawModal();
+                }
+            }).catch(err => showToast("❌ Error connecting"));
+        }
+
+        // --- Task Logic ---
         function triggerTask(taskName, event) {
-            if (!tg.initDataUnsafe.user) return alert("Please open inside Telegram");
-            createMoneyAnimation(event);
+            if (!tg.initDataUnsafe.user) return alert("Open in Telegram");
+            
+            // Simulate ECX increase for visual effect
+            currentECX += 16;
+            document.getElementById('ecx-balance').innerText = currentECX;
+            document.getElementById('ecx-balance-2').innerText = currentECX;
+
+            // Notify backend
             fetch('/api/complete_task', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ task_name: taskName, user_id: tg.initDataUnsafe.user.id, username: tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name })
             }).then(res => res.json()).then(data => { 
                 if(data.status === "success") {
-                    showToast("✅ Sent to Admin!");
+                    showToast("✅ Done! Sent to Admin");
                 }
-            }).catch(err => showToast("❌ Error connecting"));
+            }).catch(err => showToast("❌ Error"));
         }
-        
+
         function showToast(msg) {
             const toast = document.getElementById("toast"); toast.innerText = msg; toast.className = "show";
             setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
