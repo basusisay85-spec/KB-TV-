@@ -10,15 +10,12 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-light); padding-bottom: 80px; overflow-x: hidden; }
         
-        /* --- Animations --- */
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(242, 59, 93, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 59, 93, 0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Money Animation */
         .money-particle { position: fixed; font-size: 30px; animation: floatUp 1s ease-out forwards; z-index: 9999; pointer-events: none;}
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-150px) scale(1.5); } }
 
-        /* Lock Screen */
         #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 1000; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
         .lock-icon-container { width: 80px; height: 80px; background: rgba(242, 59, 93, 0.1); border-radius: 20px; display: flex; justify-content: center; align-items: center; margin-top: 40px; margin-bottom: 20px; border: 1px solid rgba(242, 59, 93, 0.3); animation: pulse 2s infinite; }
         .lock-icon-container svg { width: 40px; fill: var(--primary-red); }
@@ -34,7 +31,6 @@
         .main-btn { width: 100%; background: var(--primary-red); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.3s;}
         .main-btn.ready { opacity: 1; pointer-events: auto; animation: pulse 2s infinite;}
         
-        /* Math Modal */
         #math-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: var(--card-bg); padding: 30px 20px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; border: 1px solid var(--border-color); animation: slideUp 0.3s ease-out;}
         .robot-icon { width: 60px; height: 60px; background: rgba(242, 59, 93, 0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto; font-size: 30px; border: 1px solid rgba(242, 59, 93, 0.3); }
@@ -45,7 +41,6 @@
         .btn-cancel { background: #323242; color: white; }
         .btn-verify { background: var(--primary-red); color: white; }
 
-        /* Main App */
         #main-app { display: none; } 
         .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; font-size: 18px; font-weight: bold; }
         .user-id { background: #111; padding: 5px 12px; border-radius: 15px; font-size: 12px; color: var(--primary-red); font-weight: normal; }
@@ -108,19 +103,12 @@
 </head>
 <body>
 
-    <!-- Lock Screen -->
     <div id="lock-screen">
         <div class="lock-icon-container"><svg viewBox="0 0 24 24"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm3 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></div>
         <h1 class="lock-title">Access Required</h1>
-        <p class="lock-desc">Join all official channels to verify and unlock the app.</p>
+        <p class="lock-desc">Join our official channel to verify and unlock the app.</p>
         
-        <!-- Channel 1 (Updated to t_hacker11) -->
-        <a href="https://t.me/t_hacker11" target="_blank" class="join-btn" onclick="markJoined(this)">
-            <div class="join-btn-left"><div class="join-icon">✈️</div> Official Channel 1</div>
-            <div class="join-action">Join ➔</div>
-        </a>
-        
-        <!-- Channel 2 -->
+        <!-- Only One Channel Left -->
         <a href="https://t.me/hdj002c" target="_blank" class="join-btn" onclick="markJoined(this)">
             <div class="join-btn-left"><div class="join-icon">✈️</div> Payout Proofs</div>
             <div class="join-action">Join ➔</div>
@@ -129,7 +117,6 @@
         <button class="main-btn" id="verifyBtn" onclick="openMathModal()">Verify & Continue</button>
     </div>
 
-    <!-- Math Modal -->
     <div id="math-modal">
         <div class="modal-content">
             <div class="robot-icon">🤖</div>
@@ -144,7 +131,6 @@
         </div>
     </div>
 
-    <!-- Main App -->
     <div id="main-app">
         <div class="header">
             <div>💎 Gems Earn</div>
@@ -245,7 +231,8 @@
                 element.querySelector('.join-action').style.color = "var(--green)";
                 joinedCount++;
             }
-            if(joinedCount >= 2) {
+            // Only 1 channel now
+            if(joinedCount >= 1) {
                 const btn = document.getElementById('verifyBtn');
                 btn.classList.add('ready');
                 btn.innerText = "Verified! Click to Continue";
